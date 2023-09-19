@@ -49,9 +49,48 @@ impl Piece {
 }
 
 struct Board {
-    squares: [[Option<Piece>; 8]; 8], //Creates a board with 8x8 squares. Every square has an option for a piece that can exist there
+    squares: Vec<Option<Piece>>,
 }
 
+impl Board {
+    fn new() -> Self {
+        let mut squares = Vec::with_capacity(64); // Create a vector with a capacity of 64 squares
+
+        // Initialize the vector with None values for each square
+        for _ in 0..64 {
+            squares.push(None);
+        }
+
+        squares[0] = Some(Piece::new(Color::White, PieceType::Rook));
+        squares[1] = Some(Piece::new(Color::White, PieceType::Knight));
+        squares[2] = Some(Piece::new(Color::White, PieceType::Bishop));
+        squares[3] = Some(Piece::new(Color::White, PieceType::King));
+        squares[4] = Some(Piece::new(Color::White, PieceType::Queen));
+        squares[5] = Some(Piece::new(Color::White, PieceType::Bishop));
+        squares[6] = Some(Piece::new(Color::White, PieceType::Knight));
+        squares[7] = Some(Piece::new(Color::White, PieceType::Rook));
+
+        for i in 8..16{
+            squares[i] = Some(Piece::new(Color::White, PieceType::Pawn));
+        }
+
+        squares[56] = Some(Piece::new(Color::Black, PieceType::Rook));
+        squares[57] = Some(Piece::new(Color::Black, PieceType::Knight));
+        squares[58] = Some(Piece::new(Color::Black, PieceType::Bishop));
+        squares[59] = Some(Piece::new(Color::Black, PieceType::Queen));
+        squares[60] = Some(Piece::new(Color::Black, PieceType::King));
+        squares[61] = Some(Piece::new(Color::Black, PieceType::Bishop));
+        squares[62] = Some(Piece::new(Color::Black, PieceType::Knight));
+        squares[63] = Some(Piece::new(Color::Black, PieceType::Rook));
+
+        for i in 48..56{
+            squares[i] = Some(Piece::new(Color::Black, PieceType::Pawn));
+        }
+
+        Board { squares }
+
+    }
+}
 
 /* IMPORTANT:
  * - Document well!
@@ -71,35 +110,7 @@ impl Game {
     /// Initialises a new board with pieces.
     pub fn new() -> Game {
 
-        let mut initial_board = Board{
-            squares: [[None; 8]; 8]
-        };
-
-        initial_board.squares[0][0] = Some(Piece::new(Color::White, PieceType::Rook));
-        initial_board.squares[0][1] = Some(Piece::new(Color::White, PieceType::Knight));
-        initial_board.squares[0][2] = Some(Piece::new(Color::White, PieceType::Bishop));
-        initial_board.squares[0][3] = Some(Piece::new(Color::White, PieceType::King));
-        initial_board.squares[0][4] = Some(Piece::new(Color::White, PieceType::Queen));
-        initial_board.squares[0][5] = Some(Piece::new(Color::White, PieceType::Bishop));
-        initial_board.squares[0][6] = Some(Piece::new(Color::White, PieceType::Knight));
-        initial_board.squares[0][7] = Some(Piece::new(Color::White, PieceType::Rook));
-
-        for i in 0..8{
-            initial_board.squares[1][i] = Some(Piece::new(Color::White, PieceType::Pawn));
-        }
-
-        initial_board.squares[7][0] = Some(Piece::new(Color::Black, PieceType::Rook));
-        initial_board.squares[7][1] = Some(Piece::new(Color::Black, PieceType::Knight));
-        initial_board.squares[7][2] = Some(Piece::new(Color::Black, PieceType::Bishop));
-        initial_board.squares[7][3] = Some(Piece::new(Color::Black, PieceType::Queen));
-        initial_board.squares[7][4] = Some(Piece::new(Color::Black, PieceType::King));
-        initial_board.squares[7][5] = Some(Piece::new(Color::Black, PieceType::Bishop));
-        initial_board.squares[7][6] = Some(Piece::new(Color::Black, PieceType::Knight));
-        initial_board.squares[7][7] = Some(Piece::new(Color::Black, PieceType::Rook));
-
-        for i in 0..8{
-            initial_board.squares[6][i] = Some(Piece::new(Color::Black, PieceType::Pawn));
-        }
+        let initial_board = Board::new();
 
 
         let game = Game {
@@ -115,56 +126,58 @@ impl Game {
     }
 
 
-    fn from(&mut self) -> (u32, u32) {
+    fn from(&mut self) -> u32 {
 
-        println!("Which piece do you want to move? (Write on the form; row column)");
+        println!("Which piece do you want to move? (Write the number of the square it is )");
 
-        let mut row = 0;
-        let mut column = 0;
+        let mut place = 0;
 
         loop{
 
             let input = io::stdin();
  
     
-            let square = input 
+            let mut place1 = input 
                 .lock()
                 .lines()
                 .map(|_line| _line.ok().unwrap())
-                .collect::<String>();
+                .collect::<Vec<String>>();
+
+            place = place1.get(0).unwrap().parse().unwrap();
+
+            match &self.board.squares[place as usize] {
+
+                Some(_Piece) => {
+
+                    let player_color = match self.player{
+
+                        Player::WhitePlayer => Color::White,
+                        Player::BlackPlayer => Color::Black,
+                    };
         
-
-            let rows_and_columns: Vec<u32> = square //Gör om input strängen till en lista.
-                .split_whitespace()
-                .map(|w|w.parse::<u32>().unwrap())
-                .collect();
-
-            row = rows_and_columns[0];
-            column = rows_and_columns[1];
-
-            let player_color = match self.player{
-
-                Player::WhitePlayer => Color::White,
-                Player::BlackPlayer => Color::Black,
-            };
-
-            match self.board.squares[row as usize][column as usize] {
-                Some(Piece) => {
-
-                    if player_color == Piece.color{
-                        break;
+                    match &self.board.squares[place as usize] {
+                        Some(Piece) => {
+        
+                            if player_color == Piece.color{
+                                break;
+                            }
+                            else{
+                                println!("This square contains your opponents piece. Try selecting another square!");
+                            }
+                        },
+                        None => {
+                            println!("There is no piece at this square! Try selecting another square!");
+                        }
                     }
-                    else{
-                        println!("This square contains your opponents piece. Try selecting another square!");
-                    }
-                },
+                }
+
                 None => {
-                    println!("There is no piece at this square! Try selecting another square!");
+                    println!("Invalid input! Please enter a number between 0 and 63")
                 }
             }
         }
 
-        return (row, column);
+        place
 
     }
     /// If the current game state is `InProgress` and the move is legal, 
@@ -222,45 +235,47 @@ impl fmt::Debug for Game {
 
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
-        write!(f, " |:----------------------:|\n")?;
-        
+        let mut board_string = String::new();
+
         for row in 0..8 {
-            write!(f, " | ")?;
             for column in 0..8 {
-                if let Some(piece) = self.board.squares[row][column] {
+                let index = row * 8 + column;
+                if let Some(piece) = &self.board.squares[index] {
                     // Append the piece's representation to the string
                     let piece_str = match piece.color {
                         Color::White => match piece.piece_type {
-                            PieceType::King => "W.K ",
-                            PieceType::Queen => "W.Q ",
-                            PieceType::Rook => "W.R ",
-                            PieceType::Bishop => "W.B ",
-                            PieceType::Knight => "W:Kn",
-                            PieceType::Pawn => "W.P ",
+                            PieceType::King => "W.K",
+                            PieceType::Queen => "W.Q",
+                            PieceType::Rook => "W.R",
+                            PieceType::Bishop => "W.B",
+                            PieceType::Knight => "W.Kn",
+                            PieceType::Pawn => "W.P",
                         },
                         Color::Black => match piece.piece_type {
-                            PieceType::King => "B.K ",
-                            PieceType::Queen => "B.Q ",
-                            PieceType::Rook => "B.R ",
-                            PieceType::Bishop => "B.B ",
+                            PieceType::King => "B.K",
+                            PieceType::Queen => "B.Q",
+                            PieceType::Rook => "B.R",
+                            PieceType::Bishop => "B.B",
                             PieceType::Knight => "B.Kn",
-                            PieceType::Pawn => "B.P ",
+                            PieceType::Pawn => "B.P",
                         },
                     };
-                    write!(f, "{}", piece_str)?;
-                } 
-                else {
+                    board_string.push_str(piece_str);
+                } else {
                     // Empty square
-                    write!(f, "* ")?;
+                    board_string.push(' ');
                 }
             }
-            write!(f, "|\n")?;
+            board_string.push('\n');
         }
-        
-        write!(f, " |:----------------------:|")
-    }
 
+        write!(f, "{}", board_string)
+        
+    }
+        
 }
+
+
 
 
 // --------------------------
