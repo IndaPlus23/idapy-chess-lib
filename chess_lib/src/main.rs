@@ -210,6 +210,7 @@ fn main() {
     let mut game = Game::new();
 
     println!("{:?}", game); //Initializes a new game with the board set up in the initial position, game state as active and player as white
+
 }
 
 
@@ -244,25 +245,29 @@ impl fmt::Debug for Game {
                     // Append the piece's representation to the string
                     let piece_str = match piece.color {
                         Color::White => match piece.piece_type {
-                            PieceType::King => "W.K",
-                            PieceType::Queen => "W.Q",
-                            PieceType::Rook => "W.R",
-                            PieceType::Bishop => "W.B",
-                            PieceType::Knight => "W.Kn",
-                            PieceType::Pawn => "W.P",
+                            PieceType::King => "W.K  ",
+                            PieceType::Queen => "W.Q  ",
+                            PieceType::Rook => "W.R  ",
+                            PieceType::Bishop => "W.B  ",
+                            PieceType::Knight => "W.Kn  ",
+                            PieceType::Pawn => "W.P  ",
                         },
                         Color::Black => match piece.piece_type {
-                            PieceType::King => "B.K",
-                            PieceType::Queen => "B.Q",
-                            PieceType::Rook => "B.R",
-                            PieceType::Bishop => "B.B",
-                            PieceType::Knight => "B.Kn",
-                            PieceType::Pawn => "B.P",
+                            PieceType::King => "B.K  ",
+                            PieceType::Queen => "B.Q  ",
+                            PieceType::Rook => "B.R  ",
+                            PieceType::Bishop => "B.B  ",
+                            PieceType::Knight => "B.Kn  ",
+                            PieceType::Pawn => "B.P  ",
                         },
                     };
                     board_string.push_str(piece_str);
                 } else {
-                    // Empty square
+
+                    board_string.push(' ');
+                    board_string.push(' ');
+                    board_string.push('*');
+                    board_string.push(' ');
                     board_string.push(' ');
                 }
             }
