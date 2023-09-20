@@ -10,6 +10,7 @@ pub enum GameState {
     GameOver
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 enum Player{
     WhitePlayer,
     BlackPlayer,
@@ -21,6 +22,8 @@ enum Color{
     Black,
 }
 
+
+#[derive(PartialEq)]
 enum PieceType{
     Pawn,
     Rook,
@@ -29,6 +32,7 @@ enum PieceType{
     Queen,
     King,
 }
+
 
 struct Piece{
     color: Color,
@@ -53,7 +57,9 @@ struct Board {
 }
 
 impl Board {
+
     fn new() -> Self {
+
         let mut squares = Vec::with_capacity(64); // Create a vector with a capacity of 64 squares
 
         // Initialize the vector with None values for each square
@@ -64,8 +70,8 @@ impl Board {
         squares[0] = Some(Piece::new(Color::White, PieceType::Rook));
         squares[1] = Some(Piece::new(Color::White, PieceType::Knight));
         squares[2] = Some(Piece::new(Color::White, PieceType::Bishop));
-        squares[3] = Some(Piece::new(Color::White, PieceType::King));
-        squares[4] = Some(Piece::new(Color::White, PieceType::Queen));
+        squares[3] = Some(Piece::new(Color::White, PieceType::Queen));
+        squares[4] = Some(Piece::new(Color::White, PieceType::King));
         squares[5] = Some(Piece::new(Color::White, PieceType::Bishop));
         squares[6] = Some(Piece::new(Color::White, PieceType::Knight));
         squares[7] = Some(Piece::new(Color::White, PieceType::Rook));
@@ -77,8 +83,8 @@ impl Board {
         squares[56] = Some(Piece::new(Color::Black, PieceType::Rook));
         squares[57] = Some(Piece::new(Color::Black, PieceType::Knight));
         squares[58] = Some(Piece::new(Color::Black, PieceType::Bishop));
-        squares[59] = Some(Piece::new(Color::Black, PieceType::Queen));
-        squares[60] = Some(Piece::new(Color::Black, PieceType::King));
+        squares[59] = Some(Piece::new(Color::Black, PieceType::King));
+        squares[60] = Some(Piece::new(Color::Black, PieceType::Queen));
         squares[61] = Some(Piece::new(Color::Black, PieceType::Bishop));
         squares[62] = Some(Piece::new(Color::Black, PieceType::Knight));
         squares[63] = Some(Piece::new(Color::Black, PieceType::Rook));
@@ -92,11 +98,6 @@ impl Board {
     }
 }
 
-/* IMPORTANT:
- * - Document well!
- * - Write well structured and clean code!
- * - Read the Rust documentation, ask questions if you get stuck!
- */
 
 pub struct Game {
     
@@ -107,18 +108,18 @@ pub struct Game {
 }
 
 impl Game {
-    /// Initialises a new board with pieces.
+    /// Initialises a new board. Sets the game state to in progress and player to white player.
     pub fn new() -> Game {
 
         let initial_board = Board::new();
 
 
         let game = Game {
-            /* initialise board, set active colour to white, ... */
+
             player: Player::WhitePlayer,
             state: GameState::InProgress,
             board: initial_board,
-            //...
+            
         };
 
         game
@@ -128,22 +129,18 @@ impl Game {
 
     fn from(&mut self) -> u32 {
 
-        println!("Which piece do you want to move? (Write the number of the square it is )");
+        println!("Which piece do you want to move?");
 
+        let mut row = 0;
+        let mut column = 0;
         let mut place = 0;
 
         loop{
 
-            let input = io::stdin();
- 
-    
-            let mut place1 = input 
-                .lock()
-                .lines()
-                .map(|_line| _line.ok().unwrap())
-                .collect::<Vec<String>>();
+            let (row, column) = convert_input_to_row_column();
 
-            place = place1.get(0).unwrap().parse().unwrap();
+            place = ((row-1)*8)+column;
+            
 
             match &self.board.squares[place as usize] {
 
@@ -172,12 +169,67 @@ impl Game {
                 }
 
                 None => {
-                    println!("Invalid input! Please enter a number between 0 and 63")
+                    println!("There is no piece at this square!")
                 }
             }
         }
 
         place
+
+    }
+
+
+    fn to(&mut self, from: u32) -> u32 {
+
+        let mut to: u32 = 0;
+
+        let possible_moves: Vec<(u32, u32)> = Game::get_possible_moves(&self, from);
+
+        if possible_moves.len() == 0 {
+
+            println!("There are no possible moves for this piece. Choose another one");
+
+            Game::from(self);
+
+        }
+
+        else {
+
+            println!("These are the possible moves:");
+
+            for &(row, column) in &possible_moves {
+
+                let (letter, rank) = convert_row_column_to_output(row, column);
+
+                print!("{}", letter);
+                print!("{}", rank);
+                println!(" ");
+
+            }
+
+            println!("Choose one of these moves!");
+
+            let chosen_move = convert_input_to_row_column();
+
+            let mut index: usize = 0;
+
+            while index < possible_moves.len() {
+
+                let (mut chosen_row, mut chosen_column) = chosen_move;
+
+                if chosen_move == *possible_moves.get(index).unwrap() {
+
+                    to = ((chosen_row-1)*8)+chosen_column;
+
+                    break;
+                }
+                else {
+                    index += 1;
+                }
+            }
+        }
+
+        to
 
     }
     /// If the current game state is `InProgress` and the move is legal, 
@@ -200,19 +252,249 @@ impl Game {
     /// new positions of that piece. Don't forget to the rules for check. 
     /// 
     /// (optional) Implement en passant and castling.
-    pub fn get_possible_moves(&self, _postion: &str) -> Option<Vec<String>> {
-        None
+    pub fn get_possible_moves(&self, from: u32) -> Vec<(u32, u32)> {
+      
+        let mut possible_moves: Vec<(u32, u32)> = Vec::new();
+
+        //Make the from into a vector with the row and column of the piece
+
+        let row = from / 8;
+        let column = from % 8;
+
+        let from_row_column = (row, column);
+
+
+        match &self.board.squares[from as usize] {
+
+            Some(piece) => {
+
+                let piece_type = match piece.piece_type {
+                    
+                    PieceType::King => PieceType::King,
+                    PieceType::Queen => PieceType::Queen,
+                    PieceType::Bishop => PieceType::Bishop,
+                    PieceType::Knight => PieceType::Knight,
+                    PieceType::Rook => PieceType::Rook,
+                    PieceType::Pawn => PieceType::Pawn,
+
+                    };
+
+                    if piece_type == PieceType::King {
+
+                        possible_moves = Game::possible_moves_king(self, from_row_column);
+
+                        }      
+                    }        
+        
+            None => {
+
+                println!("There is no piece at this square!");
+            }
+
+        }
+
+        possible_moves
+
+    }
+
+    fn possible_moves_king(&self, from: (u32, u32)) -> Vec<(u32, u32)>{ //Possible move when the square is empty or there is an opponents piece there.
+
+            //The king can move in each direction one step. If it is not at the edge of the board this is eight possible squares.
+            //The kings move the same regardless of color
+
+            let mut possible_moves: Vec<(u32, u32)> = Vec::new();
+
+            let mut moves_on_the_board: Vec<(i32, i32)> = Vec::new();
+
+            let moves = [
+
+                (1, -1), (1, 0), (1, 1),
+
+                (0, -1),         (0, 1),
+
+                (-1, -1), (-1, 0), (-1, 1),
+
+            ];
+            
+            let mut row: i32 = 0;
+            let mut column: i32 = 0;
+            
+            for (r, c) in moves.iter() {
+
+                let (row1, column1) = moves.get(0).unwrap();
+
+                row = row1 + *r;
+                column = column1 + *c;
+
+                if -1 > row && row > 8 {
+
+                    if -1 > column && column > 8 {
+
+                        moves_on_the_board.push((row, column));
+                    }
+                }
+            }
+
+            for i in 0..moves_on_the_board.len() {
+
+                let square: u32 = ((row*8) + column).try_into().unwrap();
+
+                match &self.board.squares[square as usize] {
+
+                    Some(_Piece) => {
+
+                        let player_color = match self.player{
+
+                            Player::WhitePlayer => Color::White,
+                            Player::BlackPlayer => Color::Black,
+                        };
+            
+                        match &self.board.squares[square as usize] {
+                            Some(Piece) => {
+            
+                                if player_color != Piece.color{
+                                    
+                                    possible_moves.push((moves_on_the_board[i].0.try_into().unwrap(), moves_on_the_board[0].1.try_into().unwrap()));
+
+                                }
+
+                            },
+                            None => {
+
+                                possible_moves.push((moves_on_the_board[i].0.try_into().unwrap(), moves_on_the_board[0].1.try_into().unwrap()));
+
+                            }
+                        }
+                    }
+
+                    None => {
+                        println!("There is nothing here!")
+                    }
+                }
+            }
+            
+
+        possible_moves
+
+    }
+
+    fn whose_turn(&self) -> Player {
+        self.player
     }
     
 }
 
 fn main() {
-    let mut game = Game::new();
+    let mut game = Game::new(); //Initializes a new game with the board set up in the initial position, game state as active and player as white
 
-    println!("{:?}", game); //Initializes a new game with the board set up in the initial position, game state as active and player as white
+    println!("{:?}", game); //Prints the board
+
+    let game_state = Game::get_game_state(&game);
+
+    while game_state == GameState::InProgress{
+
+        let turn = Game::whose_turn(&game);
+
+        let move_from = Game::from(&mut game);
+
+        let move_to = Game::to(&mut game, move_from);
+
+
+    }
 
 }
 
+
+
+
+
+
+
+
+
+fn convert_input_to_row_column() -> (u32, u32) { //Converts the user input of a3 to a row and a column
+
+    let input = io::stdin();
+    
+    let mut place1 = input 
+        .lock()
+        .lines()
+        .map(|_line| _line.ok().unwrap())
+        .collect::<Vec<String>>();
+
+    let characters: Vec<char> = place1.get(0).expect("REASON").chars().collect();
+
+    let mut row = 0;
+    let mut column = 0;
+
+    if let Some(&letter) = characters.get(0) {
+        match letter {
+
+            'a' => column = 0,
+            'b' => column = 1,
+            'c' => column = 2,
+            'd' => column = 3,
+            'e' => column = 4,
+            'f' => column = 5,
+            'g' => column = 6,
+            'h' => column = 7,
+            _ => println!("This is not a letter that matches a column"),
+        }
+    }
+    else {
+        println!("Invalid character");
+    }
+
+
+    if let Some(&digit) = characters.get(1) {
+        if let Some(number) = digit.to_digit(10) {
+            row = number;
+        } else {
+            println!("Invalid character!");
+        }
+    } else {
+        println!("Invalid character");
+    }
+
+    return (row, column)
+
+}
+
+
+fn convert_row_column_to_output(row: u32, column: u32) -> (char, u32){
+
+
+    let row1 = row+1;
+    let mut letter: char = ' ';
+ 
+    if column == 0 {
+        letter = 'a';
+    }
+    else if column == 1 {
+        letter = 'b';
+    }
+    else if column == 2 {
+        letter = 'c';
+    }
+    else if column == 3 {
+        letter = 'd';
+    }
+    else if column == 4 {
+        letter = 'e';
+    }
+    else if column == 5 {
+        letter = 'f';
+    }
+    else if column == 6 {
+        letter = 'g';
+    }
+    else if column == 7 {
+        letter = 'h';
+    }
+
+    return (letter, column)
+
+}
 
 
 
