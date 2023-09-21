@@ -139,7 +139,7 @@ impl Game {
 
             let (row, column) = convert_input_to_row_column();
 
-            place = ((row-1)*8)+column;
+            place = ((row)*8)+column;
             
 
             match &self.board.squares[place as usize] {
@@ -192,41 +192,56 @@ impl Game {
             Game::from(self);
 
         }
-
         else {
 
-            println!("These are the possible moves:");
+            loop {
+                
+                println!("These are the possible moves:");
 
-            for &(row, column) in &possible_moves {
+                for &(row, column) in &possible_moves {
 
-                let (letter, rank) = convert_row_column_to_output(row, column);
+                    let (letter, rank) = convert_row_column_to_output(row, column);
 
-                print!("{}", letter);
-                print!("{}", rank);
-                println!(" ");
+                    print!("{}", letter);
+                    print!("{}", rank);
+                    println!(" ");
 
-            }
+                }
 
-            println!("Choose one of these moves!");
+                println!("Choose one of these moves!");
 
-            let chosen_move = convert_input_to_row_column();
+                let chosen_move: (u32, u32) = convert_input_to_row_column();
 
-            let mut index: usize = 0;
+                let mut move_in_list = false;
 
-            while index < possible_moves.len() {
+                for (row1, column1) in &possible_moves {
 
-                let (mut chosen_row, mut chosen_column) = chosen_move;
+                    if chosen_move == (*row1, *column1) {
 
-                if chosen_move == *possible_moves.get(index).unwrap() {
+                        move_in_list = true;
 
-                    to = ((chosen_row-1)*8)+chosen_column;
+                        let (to_row, to_column) = chosen_move;
 
+                        let to = row_column_to_square(chosen_move);
+
+                        Game::make_move(self, from, to);
+
+                    }
+                }
+
+                if move_in_list == false {
+
+                    println!("Choose one of the possible moves!");
+                }
+                else{
                     break;
                 }
-                else {
-                    index += 1;
-                }
+
+            
+
+            
             }
+        
         }
 
         to
@@ -234,8 +249,12 @@ impl Game {
     }
     /// If the current game state is `InProgress` and the move is legal, 
     /// move a piece and return the resulting state of the game.
-    pub fn make_move(&mut self, _from: &str, _to: &str) -> Option<GameState> {
-        None
+    pub fn make_move(&mut self, from: u32, to: u32) {
+
+        let swap = std::mem::replace(&mut self.board.squares[from as usize], None);
+
+        self.board.squares[to as usize] = swap;
+        
     }
 
     /// (Optional but recommended) Set the piece type that a pawn becames following a promotion.
@@ -258,8 +277,7 @@ impl Game {
 
         //Make the from into a vector with the row and column of the piece
 
-        let row = from / 8;
-        let column = from % 8;
+        let (row, column) = square_to_row_column(from);
 
         let from_row_column = (row, column);
 
@@ -287,6 +305,10 @@ impl Game {
                     else if piece_type == PieceType::Knight {
 
                         possible_moves = Game::possible_moves_knight(&self, from_row_column);
+                    }
+                    else if piece_type == PieceType::Rook {
+
+                        
                     }
                 }        
         
@@ -480,6 +502,8 @@ fn main() {
 
         let move_to = Game::to(&mut game, move_from);
 
+        println!("{:?}", game);
+
 
     }
 
@@ -492,6 +516,28 @@ fn main() {
 
 
 
+fn square_to_row_column(square: u32) -> (u32, u32) {
+
+    let (row, column )  = (square/8, square%8);
+
+    return (row, column);
+}
+
+fn row_column_to_square((row, column): (u32, u32)) -> u32{
+
+    let mut square = 0;
+
+    if row == 0 {
+        
+        square = column;
+    }
+    else {
+
+        square = ((row*8) + column).try_into().unwrap();
+    }
+
+    return square;
+}
 
 fn convert_input_to_row_column() -> (u32, u32) { //Converts the user input of a3 to a row and a column
 
@@ -530,7 +576,7 @@ fn convert_input_to_row_column() -> (u32, u32) { //Converts the user input of a3
 
     if let Some(&digit) = characters.get(1) {
         if let Some(number) = digit.to_digit(10) {
-            row = number;
+            row = number -1;
         } else {
             println!("Invalid character!");
         }
@@ -643,6 +689,9 @@ impl fmt::Debug for Game {
 
 #[cfg(test)]
 mod tests {
+    use crate::convert_input_to_row_column;
+    use crate::square_to_row_column;
+
     use super::Game;
     use super::GameState;
 
@@ -652,6 +701,20 @@ mod tests {
         assert_eq!(2 + 2, 4);
     }
 
+    #[test]
+    fn conversion() {
+
+        let conversion = square_to_row_column(10);
+        assert_eq!(conversion, (1,2));
+    }
+
+    #[test]
+
+    fn input_square() {
+
+        let square = convert_input_to_row_column();
+        assert_eq!(square, (0,0));
+    }
     // example test
     // check that game state is in progress after initialisation
     #[test]
