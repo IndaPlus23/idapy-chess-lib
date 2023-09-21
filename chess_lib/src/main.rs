@@ -283,8 +283,12 @@ impl Game {
 
                         possible_moves = Game::possible_moves_king(self, from_row_column);
 
-                        }      
-                    }        
+                    }      
+                    else if piece_type == PieceType::Knight {
+
+                        possible_moves = Game::possible_moves_knight(&self, from_row_column);
+                    }
+                }        
         
             None => {
 
@@ -326,9 +330,9 @@ impl Game {
                 row = row1 + *r;
                 column = column1 + *c;
 
-                if -1 > row && row > 8 {
+                if -1 < row && row < 8 {
 
-                    if -1 > column && column > 8 {
+                    if -1 < column && column < 8 {
 
                         moves_on_the_board.push((row, column));
                     }
@@ -378,6 +382,83 @@ impl Game {
 
     }
 
+    fn possible_moves_knight(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+
+        let mut possible_moves: Vec<(u32, u32)> = Vec::new();
+
+        let mut moves_on_the_board: Vec<(u32, u32)> = Vec::new();
+
+        let moves: [(i32, i32); 8] = [
+
+            (2, -1), (2, 1), 
+            
+            (1, -2), (1, 2),
+                
+            (-1, -2), (-1, 2), 
+                
+            (-2, -1), (-2, 1),
+
+        ];
+            
+        let (mut row, mut column) = from;
+        
+            
+        for (r, c) in moves.iter() {
+
+            let (row1, column1) = ((row as i32) + *r, (column as i32) + *c);
+
+            if -1 < row1 && row1 < 8 {
+
+                if -1 < column1 && column1 < 8 {
+
+                    moves_on_the_board.push((row1 as u32, column1 as u32));
+                }
+            }
+        }
+
+        for i in 0..moves_on_the_board.len() {
+
+            let (row, column) = moves_on_the_board.get(i).unwrap();
+            let square: u32 = ((row*8) + column).try_into().unwrap();
+
+            match &self.board.squares[square as usize] {
+
+                Some(_Piece) => {
+
+                    let player_color = match self.player{
+
+                        Player::WhitePlayer => Color::White,
+                        Player::BlackPlayer => Color::Black,
+                    };
+            
+                    match &self.board.squares[square as usize] {
+                        Some(Piece) => {
+            
+                            if player_color != Piece.color{
+                                    
+                                possible_moves.push((*row, *column));
+
+                            }
+
+                        },
+                        None => {
+
+                            possible_moves.push((*row, *column));
+
+                        }
+                    }
+                }
+
+                None => {
+                    possible_moves.push((*row, *column));
+                }
+            }
+        }
+
+        possible_moves
+
+    }
+    
     fn whose_turn(&self) -> Player {
         self.player
     }
@@ -428,6 +509,7 @@ fn convert_input_to_row_column() -> (u32, u32) { //Converts the user input of a3
     let mut column = 0;
 
     if let Some(&letter) = characters.get(0) {
+
         match letter {
 
             'a' => column = 0,
@@ -466,33 +548,23 @@ fn convert_row_column_to_output(row: u32, column: u32) -> (char, u32){
 
     let row1 = row+1;
     let mut letter: char = ' ';
- 
-    if column == 0 {
-        letter = 'a';
-    }
-    else if column == 1 {
-        letter = 'b';
-    }
-    else if column == 2 {
-        letter = 'c';
-    }
-    else if column == 3 {
-        letter = 'd';
-    }
-    else if column == 4 {
-        letter = 'e';
-    }
-    else if column == 5 {
-        letter = 'f';
-    }
-    else if column == 6 {
-        letter = 'g';
-    }
-    else if column == 7 {
-        letter = 'h';
+    
+
+    match column {
+
+        0 => letter = 'a',
+        1 => letter = 'b',
+        2 => letter = 'c',
+        3 => letter = 'd',
+        4 => letter = 'e',
+        5 => letter = 'f',
+        6 => letter = 'g',
+        7 => letter = 'h',
+        _ => (),
     }
 
-    return (letter, column)
+    return (letter, row1)
+
 
 }
 
