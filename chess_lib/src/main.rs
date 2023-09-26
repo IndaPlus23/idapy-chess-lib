@@ -305,35 +305,31 @@ impl Game {
 
                         possible_moves = Game::possible_moves_king(self, from_row_column);
 
-                        println!("Its a king!");
-
                     }      
                     else if piece_type == PieceType::Knight {
 
                         possible_moves = Game::possible_moves_knight(&self, from_row_column);
 
-                        println!("Its a knight!");
                     }
                     else if piece_type == PieceType::Rook {
                         
                         possible_moves = Game::possible_moves_rook(&self, from_row_column);
-
-                        println!("Its a rook!");
                         
                     }
                     else if piece_type == PieceType::Queen {
 
                         possible_moves = Game::possible_moves_queen(&self, from_row_column);
-                        println!("Its a queen!");
+
                     }
                     else if piece_type == PieceType::Bishop {
                         
                         possible_moves = Game::possible_moves_bishop(&self, from_row_column);
-                        println!("Its a bishop");
+                       
                     }
                     else if piece_type == PieceType::Pawn {
 
-                        println!("Its a pawn")
+                        possible_moves = Game::possible_moves_pawn(&self, from_row_column);
+                        
                     }
                 }        
         
@@ -677,6 +673,93 @@ impl Game {
         }
 
         return possible_moves;
+
+    }
+
+
+    fn possible_moves_pawn(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+
+        let mut possible_moves: Vec<(u32, u32)> = Vec::new();
+
+        let mut moves_on_the_board: Vec<(u32, u32)> = Vec::new();
+        let mut moves: [(i32, i32); 4] = [(0,0), (0,0), (0,0),(0,0),];
+
+        let player_color = match self.player{
+
+            Player::WhitePlayer => Color::White,
+            Player::BlackPlayer => Color::Black,
+        };
+
+        if player_color == Color::Black {
+
+            moves = [
+
+                (-1,1), (-1,0), (-1,-1), (-2, 0),
+            ]
+        }
+        else {
+
+            moves = [
+
+                (1,1), (1,0), (1,-1), (2,0),
+            ]
+        }
+          
+        let (mut row, mut column) = from;
+        
+            
+        for (r, c) in moves.iter() {
+
+            let (row1, column1) = ((row as i32) + *r, (column as i32) + *c);
+
+            if -1 < row1 && row1 < 8 {
+
+                if -1 < column1 && column1 < 8 {
+
+                    let square: u32 = row_column_to_square((row1 as u32, column1 as u32));
+
+                    match &self.board.squares[square as usize] {
+
+                        Some(Piece) => {
+            
+                            if player_color != Piece.color{
+
+                                if *c != 0 { //The piece can only capture to the sides
+
+                                    possible_moves.push((row1 as u32, column1 as u32));
+
+                                }
+                            }
+
+                        }
+
+                        None => {
+
+                            
+                            if *r == 2 { //The piece can move two steps forward if it hasnt moved before
+                                if row == 1 {
+                                    possible_moves.push((row1 as u32, column1 as u32));
+                                }
+                                else if row == 6{
+                                    possible_moves.push((row1 as u32, column1 as u32));         
+                                }
+                            }
+                            else {
+                                if *c == 0 { //The piece can move straight if there is no other piece there
+
+                                    possible_moves.push((row1 as u32, column1 as u32));
+                                }
+                            }
+                            
+                        }
+                    }
+                
+                }
+            }
+
+        }
+
+        possible_moves
 
     }
 
