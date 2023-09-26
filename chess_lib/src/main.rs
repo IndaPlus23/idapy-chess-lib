@@ -39,6 +39,7 @@ struct Piece{
     piece_type: PieceType,
 }
 
+
 impl Piece {
 
     fn new(color: Color, piece_type: PieceType) -> Piece {
@@ -51,6 +52,7 @@ impl Piece {
         piece
     }
 }
+
 
 struct Board {
     squares: Vec<Option<Piece>>,
@@ -107,6 +109,7 @@ pub struct Game {
     
 }
 
+
 impl Game {
     /// Initialises a new board. Sets the game state to in progress and player to white player.
     pub fn new() -> Game {
@@ -156,6 +159,7 @@ impl Game {
                         Some(Piece) => {
         
                             if player_color == Piece.color{
+                                println!("This is your piece!");
                                 break;
                             }
                             else{
@@ -169,7 +173,7 @@ impl Game {
                 }
 
                 None => {
-                    println!("There is no piece at this square!")
+                    println!("There is no piece at this square! Select another one!");
                 }
             }
         }
@@ -301,14 +305,35 @@ impl Game {
 
                         possible_moves = Game::possible_moves_king(self, from_row_column);
 
+                        println!("Its a king!");
+
                     }      
                     else if piece_type == PieceType::Knight {
 
                         possible_moves = Game::possible_moves_knight(&self, from_row_column);
+
+                        println!("Its a knight!");
                     }
                     else if piece_type == PieceType::Rook {
-
                         
+                        possible_moves = Game::possible_moves_rook(&self, from_row_column);
+
+                        println!("Its a rook!");
+                        
+                    }
+                    else if piece_type == PieceType::Queen {
+
+                        possible_moves = Game::possible_moves_queen(&self, from_row_column);
+                        println!("Its a queen!");
+                    }
+                    else if piece_type == PieceType::Bishop {
+                        
+                        possible_moves = Game::possible_moves_bishop(&self, from_row_column);
+                        println!("Its a bishop");
+                    }
+                    else if piece_type == PieceType::Pawn {
+
+                        println!("Its a pawn")
                     }
                 }        
         
@@ -319,6 +344,10 @@ impl Game {
 
         }
 
+        let antal_moves = possible_moves.len();
+
+        println!("{}", antal_moves);
+
         possible_moves
 
     }
@@ -328,81 +357,79 @@ impl Game {
             //The king can move in each direction one step. If it is not at the edge of the board this is eight possible squares.
             //The kings move the same regardless of color
 
-            let mut possible_moves: Vec<(u32, u32)> = Vec::new();
+        let mut possible_moves: Vec<(u32, u32)> = Vec::new();
 
-            let mut moves_on_the_board: Vec<(i32, i32)> = Vec::new();
+        let mut moves_on_the_board: Vec<(u32, u32)> = Vec::new();
 
-            let moves = [
+        let moves = [
 
-                (1, -1), (1, 0), (1, 1),
+            (1, -1), (1, 0), (1, 1),
 
-                (0, -1),         (0, 1),
+            (0, -1),         (0, 1),
 
-                (-1, -1), (-1, 0), (-1, 1),
+            (-1, -1), (-1, 0), (-1, 1),
 
-            ];
+        ];
             
-            let mut row: i32 = 0;
-            let mut column: i32 = 0;
+        let (mut row, mut column) = from;
+        
             
-            for (r, c) in moves.iter() {
+        for (r, c) in moves.iter() {
 
-                let (row1, column1) = moves.get(0).unwrap();
+            let (row1, column1) = ((row as i32) + *r, (column as i32) + *c);
 
-                row = row1 + *r;
-                column = column1 + *c;
+            if -1 < row1 && row1 < 8 {
 
-                if -1 < row && row < 8 {
+                if -1 < column1 && column1 < 8 {
 
-                    if -1 < column && column < 8 {
-
-                        moves_on_the_board.push((row, column));
-                    }
+                    moves_on_the_board.push((row1 as u32, column1 as u32));
                 }
             }
+        }
 
-            for i in 0..moves_on_the_board.len() {
+        for i in 0..moves_on_the_board.len() {
 
-                let square: u32 = ((row*8) + column).try_into().unwrap();
+            let (row, column) = moves_on_the_board.get(i).unwrap();
+            let square: u32 = ((row*8) + column).try_into().unwrap();
 
-                match &self.board.squares[square as usize] {
+            match &self.board.squares[square as usize] {
 
-                    Some(_Piece) => {
+                Some(_Piece) => {
 
-                        let player_color = match self.player{
+                    let player_color = match self.player{
 
-                            Player::WhitePlayer => Color::White,
-                            Player::BlackPlayer => Color::Black,
-                        };
-            
-                        match &self.board.squares[square as usize] {
-                            Some(Piece) => {
-            
-                                if player_color != Piece.color{
+                        Player::WhitePlayer => Color::White,
+                        Player::BlackPlayer => Color::Black,
+                    };
+                
+                    match &self.board.squares[square as usize] {
+                        Some(Piece) => {
+                
+                            if player_color != Piece.color{
                                     
-                                    possible_moves.push((moves_on_the_board[i].0.try_into().unwrap(), moves_on_the_board[0].1.try_into().unwrap()));
-
-                                }
-
-                            },
-                            None => {
-
-                                possible_moves.push((moves_on_the_board[i].0.try_into().unwrap(), moves_on_the_board[0].1.try_into().unwrap()));
+                                possible_moves.push((*row, *column));
 
                             }
+
+                        },
+                        None => {
+
+                            possible_moves.push((*row, *column));
+
                         }
                     }
+                }
 
-                    None => {
-                        println!("There is nothing here!")
-                    }
+                None => {
+                    possible_moves.push((*row, *column));
                 }
             }
-            
+        }
 
         possible_moves
 
     }
+
 
     fn possible_moves_knight(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
 
@@ -481,8 +508,189 @@ impl Game {
 
     }
     
+
+    fn possible_moves_rook(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+
+        let mut possible_moves: Vec<(u32, u32)> = Vec::new();
+
+        let player_color = match self.player{
+
+            Player::WhitePlayer => Color::White,
+            Player::BlackPlayer => Color::Black,
+        };
+
+        let directions: [(i32, i32); 4] = [
+
+            (1, 0), (-1, 0), (0, 1), (0, -1), //These are the directions for the rook
+
+        ];
+            
+        let (row, column) = from;
+            
+        for (r, c) in directions.iter() {
+
+            let (mut to_row, mut to_column) = ((row as i32) + *r, (column as i32) + *c);
+
+            while -1 < to_row && to_row < 8 && -1 < to_column && to_column < 8 {
+
+                let square = row_column_to_square((to_row as u32, to_column as u32));
+
+                
+                match &self.board.squares[square as usize] {
+
+                    Some(Piece) => {
+                    
+                        if player_color == Piece.color{ //If we find the same players piece we cannot move anymore
+                            break;
+                        }
+                        else {          // If we find the opponents piece we can capture it mut not move beyond that.
+                            possible_moves.push((to_row as u32, to_column as u32));
+                            break;
+                        }
+                        
+        
+                        },
+                    None => { //If nothing is there we can move there
+        
+                        possible_moves.push((to_row as u32, to_column as u32));
+        
+                    }
+                }
+
+                to_row = (to_row as i32) + *r;
+                to_column = (to_column as i32) + *c;
+            }
+        }
+
+        return possible_moves;
+
+    }
+
+    fn possible_moves_bishop(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+
+        let mut possible_moves: Vec<(u32, u32)> = Vec::new();
+
+        let player_color = match self.player{
+
+            Player::WhitePlayer => Color::White,
+            Player::BlackPlayer => Color::Black,
+
+        };
+
+        let directions: [(i32, i32); 4] = [
+
+            (1, 1), (1, -1), (-1, 1), (-1, -1), //These are the directions for the rook
+
+        ];
+            
+        let (row, column) = from;        
+            
+        for (r, c) in directions.iter() {
+
+            let (mut to_row, mut to_column) = ((row as i32) + *r, (column as i32) + *c);
+
+            while -1 < to_row && to_row < 8 && -1 < to_column && to_column < 8 {
+
+                let square = row_column_to_square((to_row as u32, to_column as u32));
+                
+                match &self.board.squares[square as usize] {
+
+                    Some(Piece) => {
+                    
+                        if player_color == Piece.color{ //If we find the same players piece we cannot move anymore
+                            break;
+                        }
+                        else {          // If we find the opponents piece we can capture it mut not move beyond that.
+                            possible_moves.push((to_row as u32, to_column as u32));
+                            break;
+                        }
+                        
+        
+                        },
+                    None => { //If nothing is there we can move there
+        
+                        possible_moves.push((to_row as u32, to_column as u32));
+        
+                    }
+                }
+
+                to_row = (to_row as i32) + *r;
+                to_column = (to_column as i32) + *c;
+            }
+        }
+
+        return possible_moves;
+
+    }
+    
+
+    fn possible_moves_queen(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+
+        let mut possible_moves: Vec<(u32, u32)> = Vec::new();
+
+        let player_color = match self.player{
+
+            Player::WhitePlayer => Color::White,
+            Player::BlackPlayer => Color::Black,
+        };
+
+        let directions: [(i32, i32); 8] = [
+
+            (1, 0), (-1, 0), (0, 1), (0, -1), (1,1), (1,-1), (-1,1), (-1,-1), //These are the directions for the rook
+
+        ];
+            
+        let (row, column) = from;
+            
+        for (r, c) in directions.iter() {
+
+            let (mut to_row, mut to_column) = ((row as i32) + *r, (column as i32) + *c);
+
+            while -1 < to_row && to_row < 8 && -1 < to_column && to_column < 8 {
+
+                let square = row_column_to_square((to_row as u32, to_column as u32));
+
+                match &self.board.squares[square as usize] {
+
+                    Some(Piece) => {
+                    
+                        if player_color == Piece.color{ //If we find the same players piece we cannot move anymore
+                            break;
+                        }
+                        else {          // If we find the opponents piece we can capture it mut not move beyond that.
+                            possible_moves.push((to_row as u32, to_column as u32));
+                            break;
+                        }
+                        
+        
+                        },
+                    None => { //If nothing is there we can move there
+        
+                        possible_moves.push((to_row as u32, to_column as u32));
+        
+                    }
+                }
+
+                to_row = (to_row as i32) + *r;
+                to_column = (to_column as i32) + *c;
+            }
+        }
+
+        return possible_moves;
+
+    }
+
     fn whose_turn(&self) -> Player {
         self.player
+    }
+
+    fn change_player(&mut self) {
+
+        self.player = match self.player {
+
+            Player::WhitePlayer => Player::BlackPlayer,
+            Player::BlackPlayer => Player::WhitePlayer,
+        }
     }
     
 }
@@ -504,6 +712,7 @@ fn main() {
 
         println!("{:?}", game);
 
+        Game::change_player(&mut game);
 
     }
 
