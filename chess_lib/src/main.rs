@@ -61,17 +61,15 @@ struct Board {
     squares: Vec<Option<Piece>>,
 }
 
-impl Board {
+impl Board { //Implements the board struct
 
-    fn new() -> Self {
-
+    fn new() -> Self { //This initializes a new board with all the pieces in their correct spots
         let mut squares = Vec::with_capacity(64); // Create a vector with a capacity of 64 squares
-
         // Initialize the vector with None values for each square
         for _ in 0..64 {
             squares.push(None);
         }
-
+        //Puts all the pieces in their coorect starting spots
         squares[0] = Some(Piece::new(Color::White, PieceType::Rook));
         squares[1] = Some(Piece::new(Color::White, PieceType::Knight));
         squares[2] = Some(Piece::new(Color::White, PieceType::Bishop));
@@ -83,8 +81,8 @@ impl Board {
 
         for i in 8..16{
             squares[i] = Some(Piece::new(Color::White, PieceType::Pawn));
-        }
 
+        }
         squares[56] = Some(Piece::new(Color::Black, PieceType::Rook));
         squares[57] = Some(Piece::new(Color::Black, PieceType::Knight));
         squares[58] = Some(Piece::new(Color::Black, PieceType::Bishop));
@@ -96,13 +94,11 @@ impl Board {
 
         for i in 48..56{
             squares[i] = Some(Piece::new(Color::Black, PieceType::Pawn));
+            
         }
-
         Board { squares }
-
     }
 }
-
 
 
 #[derive(Clone)]
@@ -205,7 +201,7 @@ impl Game {
 
             let (from_row, from_column) = square_to_row_column(from);
 
-            let legal_move = self.in_check((row, column), (from_row, from_column));
+            let legal_move = self.legal_move((row, column), (from_row, from_column));
             
             if legal_move == true {
 
@@ -750,7 +746,7 @@ impl Game {
 
     }
 
-    fn in_check(&mut self, to: (u32, u32), from: (u32,u32)) -> bool { //Sees if the move is legal
+    fn legal_move(&mut self, to: (u32, u32), from: (u32,u32)) -> bool { //Sees if the move is legal. It is legal if the move does not lead to the players king being in check
 
         let mut simulation = self.clone(); //We simulate the move to see if it will make the players own king be checked.
         
@@ -841,6 +837,102 @@ impl Game {
 
     }
     
+    fn checkmate(&mut self) -> bool { //Sees if the player is in checkmate
+
+        println!("Are you in checkmate?");
+        
+        let player_color = match self.player {
+
+            Player::BlackPlayer => Color::Black,
+            Player::WhitePlayer => Color::White,
+        };
+
+        let mut king_square = 0;
+
+        for i in 0..64 { //We need to find the square where the king is
+
+            match &self.board.squares[i as usize] { //Check every single square and if the king is there we assign that particular square as the king square
+
+                Some(Piece) => {
+
+                    let piece_type = match Piece.piece_type {
+                        
+                        PieceType::King => PieceType::King,
+                        PieceType::Queen => PieceType::Queen,
+                        PieceType::Bishop => PieceType::Bishop,
+                        PieceType::Knight => PieceType::Knight,
+                        PieceType::Rook => PieceType::Rook,
+                        PieceType::Pawn => PieceType::Pawn,
+        
+                        };
+
+                    if player_color == Piece.color && piece_type == PieceType::King { //This is the players king
+
+                        king_square = i;
+
+                        println!("The king square is {}", king_square);
+                            
+                    }
+
+                }
+                None => {
+                }
+            }
+            
+        }
+
+        let mut possible_moves = Vec::new();
+        let mut all_moves = Vec::new();
+
+        for i in 0..64 { //We check the moves of all the opponents pieces and if they can move to the square of the king that means the move is illegal
+
+            match &self.board.squares[i as usize] {
+
+                Some(Piece) => {
+    
+                    if player_color == Piece.color{
+
+                        let white = match self.player {
+
+                            Player::WhitePlayer => true,
+                            Player::BlackPlayer => false,
+                        };
+
+                        possible_moves = self.get_possible_moves(i, white);
+                        
+                        for (row, column) in &possible_moves {
+
+                            let move_square = row_column_to_square((*row, *column));
+
+                            let from = square_to_row_column(i);
+                        
+                            let legal_move = self.legal_move((*row, *column), from);
+                            
+                            if legal_move == true {
+
+                                all_moves.push((*row, *column));
+                            }
+                        }
+                    }
+
+                }
+            
+
+                None => {
+
+               }
+            }
+        }
+
+        if all_moves.len() == 0 { //This means there are no possible moves for the player, they are in checkmate
+            println!("You are in checkmate!");
+            return true;
+        }
+        else {
+            println!("You are not in checkmate");
+            return false;
+        }
+    }
 
     fn whose_turn(&self) -> Player {
         
@@ -866,6 +958,12 @@ fn main() {
     let game_state = Game::get_game_state(&game);
 
     while game_state != GameState::GameOver {
+
+        let checkmate = Game::checkmate(&mut game);
+
+        if checkmate == true {
+            break;
+        }
 
         let turn = Game::whose_turn(&game);
 
