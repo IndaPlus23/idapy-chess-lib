@@ -16,14 +16,14 @@ enum Player{
     BlackPlayer,
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 enum Color{
     White,
     Black,
 }
 
 
-#[derive(PartialEq)]
+#[derive( Clone, PartialEq)]
 enum PieceType{
     Pawn,
     Rook,
@@ -34,6 +34,7 @@ enum PieceType{
 }
 
 
+#[derive(Clone)]
 struct Piece{
     color: Color,
     piece_type: PieceType,
@@ -54,7 +55,9 @@ impl Piece {
 }
 
 
+#[derive(Clone)]
 struct Board {
+    
     squares: Vec<Option<Piece>>,
 }
 
@@ -85,8 +88,8 @@ impl Board {
         squares[56] = Some(Piece::new(Color::Black, PieceType::Rook));
         squares[57] = Some(Piece::new(Color::Black, PieceType::Knight));
         squares[58] = Some(Piece::new(Color::Black, PieceType::Bishop));
-        squares[59] = Some(Piece::new(Color::Black, PieceType::King));
-        squares[60] = Some(Piece::new(Color::Black, PieceType::Queen));
+        squares[59] = Some(Piece::new(Color::Black, PieceType::Queen));
+        squares[60] = Some(Piece::new(Color::Black, PieceType::King));
         squares[61] = Some(Piece::new(Color::Black, PieceType::Bishop));
         squares[62] = Some(Piece::new(Color::Black, PieceType::Knight));
         squares[63] = Some(Piece::new(Color::Black, PieceType::Rook));
@@ -101,6 +104,8 @@ impl Board {
 }
 
 
+
+#[derive(Clone)]
 pub struct Game {
     
     player: Player,
@@ -134,8 +139,6 @@ impl Game {
 
         println!("Which piece do you want to move?");
 
-        let mut row = 0;
-        let mut column = 0;
         let mut place = 0;
 
         loop{
@@ -187,9 +190,31 @@ impl Game {
 
         let mut to: u32 = 0;
 
-        let possible_moves: Vec<(u32, u32)> = Game::get_possible_moves(&self, from);
 
-        if possible_moves.len() == 0 {
+        let white = match self.player {
+
+            Player::WhitePlayer => true,
+            Player::BlackPlayer => false,
+        };
+
+        let possible_moves: Vec<(u32, u32)> = Game::get_possible_moves(&self, from, white);
+
+        let mut possible_moves_after_check = Vec::new();
+
+        for &(row, column) in &possible_moves {
+
+            let (from_row, from_column) = square_to_row_column(from);
+
+            let legal_move = self.in_check((row, column), (from_row, from_column));
+            
+            if legal_move == true {
+
+                possible_moves_after_check.push((row, column));
+
+            }
+        }
+
+        if possible_moves_after_check.len() == 0 {
 
             println!("There are no possible moves for this piece. Choose another one");
 
@@ -202,7 +227,7 @@ impl Game {
                 
                 println!("These are the possible moves:");
 
-                for &(row, column) in &possible_moves {
+                for &(row, column) in &possible_moves_after_check {
 
                     let (letter, rank) = convert_row_column_to_output(row, column);
 
@@ -218,13 +243,11 @@ impl Game {
 
                 let mut move_in_list = false;
 
-                for (row1, column1) in &possible_moves {
+                for (row1, column1) in &possible_moves_after_check {
 
                     if chosen_move == (*row1, *column1) {
 
                         move_in_list = true;
-
-                        let (to_row, to_column) = chosen_move;
 
                         let to = row_column_to_square(chosen_move);
 
@@ -275,8 +298,14 @@ impl Game {
     /// new positions of that piece. Don't forget to the rules for check. 
     /// 
     /// (optional) Implement en passant and castling.
-    pub fn get_possible_moves(&self, from: u32) -> Vec<(u32, u32)> {
-      
+    pub fn get_possible_moves(&self, from: u32, white: bool) -> Vec<(u32, u32)> {
+        
+        let player_color = match white {
+
+            true => Color::White,
+            false => Color::Black,
+        };
+
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
 
         //Make the from into a vector with the row and column of the piece
@@ -303,32 +332,32 @@ impl Game {
 
                     if piece_type == PieceType::King {
 
-                        possible_moves = Game::possible_moves_king(self, from_row_column);
+                        possible_moves = self.possible_moves_king(from_row_column, player_color);
 
                     }      
                     else if piece_type == PieceType::Knight {
 
-                        possible_moves = Game::possible_moves_knight(&self, from_row_column);
+                        possible_moves = self.possible_moves_knight(from_row_column, player_color);
 
                     }
                     else if piece_type == PieceType::Rook {
                         
-                        possible_moves = Game::possible_moves_rook(&self, from_row_column);
+                        possible_moves = self.possible_moves_rook(from_row_column, player_color);
                         
                     }
                     else if piece_type == PieceType::Queen {
 
-                        possible_moves = Game::possible_moves_queen(&self, from_row_column);
+                        possible_moves = self.possible_moves_queen(from_row_column, player_color);
 
                     }
                     else if piece_type == PieceType::Bishop {
                         
-                        possible_moves = Game::possible_moves_bishop(&self, from_row_column);
+                        possible_moves = self.possible_moves_bishop(from_row_column, player_color);
                        
                     }
                     else if piece_type == PieceType::Pawn {
 
-                        possible_moves = Game::possible_moves_pawn(&self, from_row_column);
+                        possible_moves = self.possible_moves_pawn(from_row_column, player_color);
                         
                     }
                 }        
@@ -340,15 +369,11 @@ impl Game {
 
         }
 
-        let antal_moves = possible_moves.len();
-
-        println!("{}", antal_moves);
-
         possible_moves
 
     }
 
-    fn possible_moves_king(&self, from: (u32, u32)) -> Vec<(u32, u32)>{ //Possible move when the square is empty or there is an opponents piece there.
+    fn possible_moves_king(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)>{ //Possible move when the square is empty or there is an opponents piece there.
 
             //The king can move in each direction one step. If it is not at the edge of the board this is eight possible squares.
             //The kings move the same regardless of color
@@ -392,12 +417,6 @@ impl Game {
 
                 Some(_Piece) => {
 
-                    let player_color = match self.player{
-
-                        Player::WhitePlayer => Color::White,
-                        Player::BlackPlayer => Color::Black,
-                    };
-                
                     match &self.board.squares[square as usize] {
                         Some(Piece) => {
                 
@@ -427,7 +446,7 @@ impl Game {
     }
 
 
-    fn possible_moves_knight(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+    fn possible_moves_knight(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> {
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
 
@@ -470,12 +489,6 @@ impl Game {
 
                 Some(_Piece) => {
 
-                    let player_color = match self.player{
-
-                        Player::WhitePlayer => Color::White,
-                        Player::BlackPlayer => Color::Black,
-                    };
-            
                     match &self.board.squares[square as usize] {
                         Some(Piece) => {
             
@@ -505,15 +518,9 @@ impl Game {
     }
     
 
-    fn possible_moves_rook(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+    fn possible_moves_rook(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> {
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
-
-        let player_color = match self.player{
-
-            Player::WhitePlayer => Color::White,
-            Player::BlackPlayer => Color::Black,
-        };
 
         let directions: [(i32, i32); 4] = [
 
@@ -562,16 +569,9 @@ impl Game {
 
     }
 
-    fn possible_moves_bishop(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+    fn possible_moves_bishop(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> {
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
-
-        let player_color = match self.player{
-
-            Player::WhitePlayer => Color::White,
-            Player::BlackPlayer => Color::Black,
-
-        };
 
         let directions: [(i32, i32); 4] = [
 
@@ -620,15 +620,9 @@ impl Game {
     }
     
 
-    fn possible_moves_queen(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+    fn possible_moves_queen(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> {
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
-
-        let player_color = match self.player{
-
-            Player::WhitePlayer => Color::White,
-            Player::BlackPlayer => Color::Black,
-        };
 
         let directions: [(i32, i32); 8] = [
 
@@ -677,18 +671,11 @@ impl Game {
     }
 
 
-    fn possible_moves_pawn(&self, from: (u32, u32)) -> Vec<(u32, u32)> {
+    fn possible_moves_pawn(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> {
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
 
-        let mut moves_on_the_board: Vec<(u32, u32)> = Vec::new();
         let mut moves: [(i32, i32); 4] = [(0,0), (0,0), (0,0),(0,0),];
-
-        let player_color = match self.player{
-
-            Player::WhitePlayer => Color::White,
-            Player::BlackPlayer => Color::Black,
-        };
 
         if player_color == Color::Black {
 
@@ -763,7 +750,100 @@ impl Game {
 
     }
 
+    fn in_check(&mut self, to: (u32, u32), from: (u32,u32)) -> bool { //Sees if the move is legal
+
+        let mut simulation = self.clone(); //We simulate the move to see if it will make the players own king be checked.
+        
+        let from_square = row_column_to_square((from.0, from.1));
+        let to_square = row_column_to_square((to.0, to.1));
+        
+        simulation.make_move(from_square, to_square);
+
+        let player_color = match self.player {
+
+            Player::BlackPlayer => Color::Black,
+            Player::WhitePlayer => Color::White,
+        };
+
+        let mut king_square = 0;
+
+        for i in 0..64 { //We need to find the square where the king is
+
+            match &simulation.board.squares[i as usize] { //Check every single square and if the king is there we assign that particular square as the king square
+
+                Some(piece) => {
+
+                    let piece_type = match piece.piece_type {
+                        
+                        PieceType::King => PieceType::King,
+                        PieceType::Queen => PieceType::Queen,
+                        PieceType::Bishop => PieceType::Bishop,
+                        PieceType::Knight => PieceType::Knight,
+                        PieceType::Rook => PieceType::Rook,
+                        PieceType::Pawn => PieceType::Pawn,
+        
+                        };
+
+                    if player_color == piece.color && piece_type == PieceType::King { //This is the players king
+
+                        king_square = i;
+                            
+                    }
+
+                }
+                None => {
+                }
+            }
+            
+        }
+
+        let mut possible_moves = Vec::new();
+
+        for i in 0..64 { //We check the moves of all the opponents pieces and if they can move to the square of the king that means the move is illegal
+
+            match &simulation.board.squares[i as usize] {
+
+                Some(piece) => {
+    
+                    if player_color != piece.color{
+
+                        let opponent_white = match self.player {
+
+                            Player::WhitePlayer => false,
+                            Player::BlackPlayer => true,
+                        };
+
+                        possible_moves = simulation.get_possible_moves(i, opponent_white);
+                        
+                        for (row, column) in &possible_moves {
+
+                            let move_square = row_column_to_square((*row, *column));
+
+                            if move_square == king_square {
+
+                                return false;
+                                
+                            }
+                            
+                        }
+                    }
+
+                }
+            
+
+                None => {
+
+               }
+            }
+        }
+
+        return true;
+
+    }
+    
+
     fn whose_turn(&self) -> Player {
+        
         self.player
     }
 
@@ -785,7 +865,7 @@ fn main() {
 
     let game_state = Game::get_game_state(&game);
 
-    while game_state == GameState::InProgress{
+    while game_state != GameState::GameOver {
 
         let turn = Game::whose_turn(&game);
 
@@ -798,6 +878,8 @@ fn main() {
         Game::change_player(&mut game);
 
     }
+
+    println!("Game over!");
 
 }
 
