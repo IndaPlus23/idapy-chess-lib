@@ -129,6 +129,11 @@ impl Game {
         game
 
     }
+    
+    fn get_game(self) -> (Game) {
+
+        return self;
+    }
 
 
     fn from(&mut self) -> u32 { //This is a function that will let the user choose which piece to move by entering the coordinates for the square the piece is on
