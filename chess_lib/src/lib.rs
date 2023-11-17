@@ -23,7 +23,7 @@ pub enum Color{
 }
 
 
-#[derive( Clone, PartialEq)]
+#[derive( Clone, PartialEq, Copy)]
 pub enum PieceType{
     Pawn,
     Rook,
@@ -34,7 +34,7 @@ pub enum PieceType{
 }
 
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Piece{
     color: Color,
     piece_type: PieceType,
