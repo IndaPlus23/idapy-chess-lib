@@ -54,7 +54,7 @@ impl Piece {
     }
 
     pub fn get_color(&self) -> Color{
-        &self.color
+        self.color
     }
 }
 
