@@ -16,7 +16,7 @@ pub enum Player{
     BlackPlayer,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Copy)]
 pub enum Color{
     White,
     Black,
