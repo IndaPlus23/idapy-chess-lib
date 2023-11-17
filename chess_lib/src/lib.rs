@@ -61,7 +61,7 @@ pub struct Board {
     squares: Vec<Option<Piece>>,
 }
 
-pub impl Board { //Implements the board struct
+impl Board { //Implements the board struct
 
     pub fn new() -> Self { //This initializes a new board with all the pieces in their correct spots
         let mut squares = Vec::with_capacity(64); // Create a vector with a capacity of 64 squares
@@ -111,7 +111,7 @@ pub struct Game {
 }
 
 
-pub impl Game {
+impl Game {
     /// Initialises a new board. Sets the game state to in progress and player to white player.
     pub fn new() -> Game {
 
