@@ -11,20 +11,20 @@ pub enum GameState {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-enum Player{
+pub enum Player{
     WhitePlayer,
     BlackPlayer,
 }
 
 #[derive(Clone, PartialEq)]
-enum Color{
+pub enum Color{
     White,
     Black,
 }
 
 
 #[derive( Clone, PartialEq)]
-enum PieceType{
+pub enum PieceType{
     Pawn,
     Rook,
     Knight,
@@ -35,7 +35,7 @@ enum PieceType{
 
 
 #[derive(Clone)]
-struct Piece{
+pub struct Piece{
     color: Color,
     piece_type: PieceType,
 }
@@ -43,7 +43,7 @@ struct Piece{
 
 impl Piece {
 
-    fn new(color: Color, piece_type: PieceType) -> Piece {
+    pub fn new(color: Color, piece_type: PieceType) -> Piece {
         
         let piece = Piece {
             color,
@@ -63,7 +63,7 @@ struct Board {
 
 impl Board { //Implements the board struct
 
-    fn new() -> Self { //This initializes a new board with all the pieces in their correct spots
+    pub fn new() -> Self { //This initializes a new board with all the pieces in their correct spots
         let mut squares = Vec::with_capacity(64); // Create a vector with a capacity of 64 squares
         // Initialize the vector with None values for each square
         for _ in 0..64 {
@@ -130,13 +130,13 @@ impl Game {
 
     }
     
-    fn get_game(self) -> (Game) {
+    pub fn get_game(self) -> (Game) {
 
         return self;
     }
 
 
-    fn from(&mut self) -> u32 { //This is a function that will let the user choose which piece to move by entering the coordinates for the square the piece is on
+    pub fn from(&mut self) -> u32 { //This is a function that will let the user choose which piece to move by entering the coordinates for the square the piece is on
 
         println!("Which piece do you want to move?");
 
@@ -188,7 +188,7 @@ impl Game {
     }
 
 
-    fn to(&mut self, from: u32) -> u32 { //This function will let the user pick from the available moves for the piece they want to move. If there are no moves they have to pick again
+    pub fn to(&mut self, from: u32) -> u32 { //This function will let the user pick from the available moves for the piece they want to move. If there are no moves they have to pick again
 
         let mut to: u32 = 0;
 
@@ -378,7 +378,7 @@ impl Game {
 
     }
 
-    fn possible_moves_king(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)>{ //Determines the possible moves for the king
+    pub fn possible_moves_king(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)>{ //Determines the possible moves for the king
 
             //The king can move in each direction one step. If it is not at the edge of the board this is eight possible squares.
             //The kings move the same regardless of color
@@ -451,7 +451,7 @@ impl Game {
     }
 
 
-    fn possible_moves_knight(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves of the knight
+    pub fn possible_moves_knight(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves of the knight
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
 
@@ -525,7 +525,7 @@ impl Game {
     }
     
 
-    fn possible_moves_rook(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves of the rook
+    pub fn possible_moves_rook(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves of the rook
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
 
@@ -576,7 +576,7 @@ impl Game {
 
     }
 
-    fn possible_moves_bishop(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves for the bishop
+    pub fn possible_moves_bishop(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves for the bishop
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
 
@@ -628,7 +628,7 @@ impl Game {
     }
     
 
-    fn possible_moves_queen(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves for the queen
+    pub fn possible_moves_queen(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves for the queen
 
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
 
@@ -680,7 +680,7 @@ impl Game {
     }
 
 
-    fn possible_moves_pawn(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves of the pawn
+    pub fn possible_moves_pawn(&self, from: (u32, u32), player_color: Color) -> Vec<(u32, u32)> { //Returns all the possible moves of the pawn
 
         //The pawn is difficult since it has different directions depending on the player since pawns can only move relatively forward.
         let mut possible_moves: Vec<(u32, u32)> = Vec::new();
@@ -762,7 +762,7 @@ impl Game {
 
     }
 
-    fn legal_move(&mut self, to: (u32, u32), from: (u32,u32)) -> bool { //Sees if the move is legal. It is legal if the move does not lead to the players king being in check
+    pub fn legal_move(&mut self, to: (u32, u32), from: (u32,u32)) -> bool { //Sees if the move is legal. It is legal if the move does not lead to the players king being in check
 
         let mut simulation = self.clone(); //We simulate the move to see if it will make the players own king be checked.
         
@@ -853,7 +853,7 @@ impl Game {
 
     }
     
-    fn checkmate(&mut self) -> bool { //Sees if the player is in checkmate
+    pub fn checkmate(&mut self) -> bool { //Sees if the player is in checkmate
         
         let player_color = match self.player {
 
@@ -946,12 +946,12 @@ impl Game {
         }
     }
 
-    fn whose_turn(&self) -> Player {
+    pub fn whose_turn(&self) -> Player {
         
         self.player
     }
 
-    fn change_player(&mut self) {
+    pub fn change_player(&mut self) {
 
         self.player = match self.player {
 
@@ -962,7 +962,7 @@ impl Game {
     
 }
 
-fn main() {
+pub fn main() {
     let mut game = Game::new(); //Initializes a new game with the board set up in the initial position, game state as active and player as white
 
     println!("{:?}", game); //Prints the board in its starting position
@@ -1002,14 +1002,14 @@ fn main() {
 
 
 
-fn square_to_row_column(square: u32) -> (u32, u32) { //Goes from the number notation ro the row column notation for the square
+pub fn square_to_row_column(square: u32) -> (u32, u32) { //Goes from the number notation ro the row column notation for the square
 
     let (row, column )  = (square/8, square%8);
 
     return (row, column);
 }
 
-fn row_column_to_square((row, column): (u32, u32)) -> u32{ //Goes from row column notation to number notation for the square
+pub fn row_column_to_square((row, column): (u32, u32)) -> u32{ //Goes from row column notation to number notation for the square
 
     let mut square = 0;
 
@@ -1025,7 +1025,7 @@ fn row_column_to_square((row, column): (u32, u32)) -> u32{ //Goes from row colum
     return square;
 }
 
-fn convert_input_to_row_column() -> (u32, u32) { //Converts the user input of ""a3" to a row and a column
+pub fn convert_input_to_row_column() -> (u32, u32) { //Converts the user input of ""a3" to a row and a column
 
     let input = io::stdin(); 
     
@@ -1075,7 +1075,7 @@ fn convert_input_to_row_column() -> (u32, u32) { //Converts the user input of ""
 }
 
 
-fn convert_row_column_to_output(row: u32, column: u32) -> (char, u32){ //Convers the row column notation to an output like a3
+pub fn convert_row_column_to_output(row: u32, column: u32) -> (char, u32){ //Convers the row column notation to an output like a3
 
 
     let row1 = row+1;
