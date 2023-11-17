@@ -98,6 +98,11 @@ impl Board { //Implements the board struct
         }
         Board { squares }
     }
+
+    pub fn get_squares(&self) -> &Vec<Option<Piece>> {
+        &self.squares
+    }
+    
 }
 
 
