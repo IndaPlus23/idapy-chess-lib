@@ -56,6 +56,11 @@ impl Piece {
     pub fn get_color(&self) -> Color{
         self.color
     }
+
+    pub fn get_piece_type() -> PieceType{
+
+        self.piece_type
+    }
 }
 
 
