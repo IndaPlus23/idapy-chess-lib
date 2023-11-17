@@ -135,6 +135,10 @@ impl Game {
         return self;
     }
 
+    pub fn get_board(&self) -> &Board {
+        &self.board
+    }
+
 
     pub fn from(&mut self) -> u32 { //This is a function that will let the user choose which piece to move by entering the coordinates for the square the piece is on
 
