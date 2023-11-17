@@ -52,6 +52,10 @@ impl Piece {
         
         piece
     }
+
+    pub fn get_color(&self) -> Color{
+        &self.color
+    }
 }
 
 
@@ -102,7 +106,7 @@ impl Board { //Implements the board struct
     pub fn get_squares(&self) -> &Vec<Option<Piece>> {
         &self.squares
     }
-    
+
 }
 
 
